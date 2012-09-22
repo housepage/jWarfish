@@ -1,0 +1,134 @@
+/*
+ *  Project: 
+ *  Description: 
+ *  Author: 
+ *  License: 
+ */
+
+// the semi-colon before function invocation is a safety net against concatenated
+// scripts and/or other plugins which may not be closed properly.
+;(function ( $, window, undefined ) {
+    // undefined is used here as the undefined global variable in ECMAScript 3 is
+    // mutable (ie. it can be changed by someone else). undefined isn't really being
+    // passed in so we can ensure the value of it is truly undefined. In ES5, undefined
+    // can no longer be modified.
+    
+    // window is passed through as local variable rather than global
+    // as this (slightly) quickens the resolution process and can be more efficiently
+    // minified (especially when both are regularly referenced in your plugin).
+
+    // Create the defaults once
+    var pluginName = 'jWarfish',
+        document = window.document,
+        defaults = {
+            rss_reference_url:'http://warfish.net/war/play/gamelist?rss=1',
+            login_url:'http://warfish.net/war/login',
+            on_not_logged_in: function() {
+                console.log("Not logged in");
+            },
+            on_error: function() {
+                console.log("Error in fetching data");
+            }
+        };
+
+    // The actual plugin constructor
+    function Plugin( element, options ) {
+        this.element = element;
+
+        // jQuery has an extend method which merges the contents of two or
+        // more objects, storing the result in the first object. The first object
+        // is generally empty as we don't want to alter the default options for
+        // future instances of the plugin
+        this.options = $.extend( {}, defaults, options) ;
+        
+        this._defaults = defaults;
+        this._name = pluginName;
+        
+        this.init();
+    }
+
+    Plugin.prototype = { 
+      init : function () {
+        this.updateRSSURL();
+      },
+
+      updateRSSURL : function(el, options) {
+
+        var active_rss_url, your_turn_rss_url,
+            this_options = this.options;
+
+        var rss_reference = $.ajax(
+            { url: this.options.rss_reference_url, 
+              success: function(data,textStatus,request) {
+                var parsed = $(data).find('a[type="application/rss+xml"]');
+
+                if(parsed.length > 1){
+                  active_rss_url = $(parsed[0]).attr('href');
+                  your_turn_rss_url = $(parsed[1]).attr('href');
+                } else {
+                  this_options.on_not_logged_in();
+                }
+              },
+              error: function(data) {
+                console.log("Error in retriving rss url");
+                this_options.on_error();
+              },
+              async: false,
+              type: "GET",
+        });
+
+        this.rss_url = {
+          active : active_rss_url,
+          turn : your_turn_rss_url
+        };
+      },
+
+      getTurnGames : function(el, options) {
+        var turn;
+
+        if(this.rss_url != undefined) {
+          var feed = jQuery.getFeed({
+            url: this.rss_url.turn,
+            success: function(feed) {
+              turn = feed; 
+            }
+          });
+        } else {
+          this.on_error(); 
+        }
+
+        return turn; 
+      },
+
+      getTurnGamesCount : function(el, options) {
+        return this.getTurnGames().items.length - 1;
+      },
+
+      getActiveGames : function(el, options) {
+        var active;
+
+        if(this.rss_url != undefined) {
+          var feed = jQuery.getFeed({
+            url: this.rss_url.active,
+            success: function(feed) {
+              active = feed; 
+            }
+          });
+        } else {
+          this.on_error(); 
+        }
+
+        return active; 
+      },
+
+      getActiveGamesCount : function(el, options) {
+        return this.getActiveGames().items.length - 1;
+      },
+    };
+
+    // A really lightweight plugin wrapper around the constructor,
+    // preventing against multiple instantiations
+    $.jWarfish = function ( options ) {
+        return new Plugin( this, options );
+    };
+}(jQuery, window));
