@@ -28,7 +28,11 @@
             },
             on_error: function() {
                 console.log("Error in fetching data");
-            }
+            },
+            on_update_turn_count: function() {
+                console.log("Updating");
+            },
+            polling_interval: 60000,
         };
 
     // The actual plugin constructor
@@ -50,6 +54,7 @@
     Plugin.prototype = { 
       init : function () {
         this.updateRSSURL();
+        this.initializeTurnCountUpdate();
       },
 
       updateRSSURL : function(el, options) {
@@ -124,6 +129,23 @@
       getActiveGamesCount : function(el, options) {
         return this.getActiveGames().items.length - 1;
       },
+
+      initializeTurnCountUpdate : function(el,options) {
+        var warfish = this;
+
+        var warfish_update_count = function() {
+          warfish.updateTurnCount();
+        };
+
+        window.onload = warfish_update_count;
+        window.setInterval(warfish_update_count, warfish.options.polling_interval);
+      },
+
+      updateTurnCount : function() {
+        var turn_count = this.getTurnGamesCount();
+        this.options.on_turn_update(turn_count); 
+      },
+
     };
 
     // A really lightweight plugin wrapper around the constructor,
