@@ -88,26 +88,38 @@
         };
       },
 
-      getTurnGames : function(el, options) {
-        var turn;
 
-        if(this.rss_url != undefined) {
+      getGames: function(url){
+        var games;
+
+
+        if(url != undefined) {
           var feed = jQuery.getFeed({
-            url: this.rss_url.turn,
+            url: url,
             success: function(feed) {
-              turn = feed; 
+              games = feed; 
             }
           });
         } else {
           this.options.on_error(); 
         }
 
-        if(typeof turn == 'undefined'){
+        if(typeof games == 'undefined'){
           this.options.on_error();
           return {items :[]};
         }
 
-        return turn; 
+        return games; 
+      },
+
+      getTurnGames : function(el, options) {
+        if(this.rss_url != undefined) {
+          return this.getGames(this.rss_url.turn);
+        } else {
+          console.log("WHOA");
+          this.options.on_error();
+          return {items :[]};
+        }
       },
 
       getTurnGamesCount : function(el, options) {
@@ -120,25 +132,12 @@
       },
 
       getActiveGames : function(el, options) {
-        var active;
-
-        if(this.rss_url != undefined) {
-          var feed = jQuery.getFeed({
-            url: this.rss_url.active,
-            success: function(feed) {
-              active = feed; 
-            }
-          });
+        if(this.rss_url != undefined){
+          return this.getGames(this.rss_url.active);
         } else {
-          this.options.on_error(); 
-        }
-        
-        if(typeof turn == 'undefined'){
           this.options.on_error();
           return {items :[]};
         }
-
-        return active; 
       },
 
       getActiveGamesCount : function(el, options) {
