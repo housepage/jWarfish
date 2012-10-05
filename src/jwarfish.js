@@ -99,14 +99,24 @@
             }
           });
         } else {
-          this.on_error(); 
+          this.options.on_error(); 
+        }
+
+        if(typeof turn == 'undefined'){
+          this.options.on_error();
+          return {items :[]};
         }
 
         return turn; 
       },
 
       getTurnGamesCount : function(el, options) {
-        return this.getTurnGames().items.length - 1;
+        var count = this.getTurnGames().items.length - 1;
+        if(count < 0){
+          return 'E';
+        } else {
+          return count;
+        }
       },
 
       getActiveGames : function(el, options) {
@@ -120,14 +130,24 @@
             }
           });
         } else {
-          this.on_error(); 
+          this.options.on_error(); 
+        }
+        
+        if(typeof turn == 'undefined'){
+          this.options.on_error();
+          return {items :[]};
         }
 
         return active; 
       },
 
       getActiveGamesCount : function(el, options) {
-        return this.getActiveGames().items.length - 1;
+        var count = this.getActiveGames().items.length - 1;
+        if(count < 0){
+          return 'E';
+        } else {
+          return count;
+        }
       },
 
       initializeTurnCountUpdate : function(el,options) {
